@@ -7,7 +7,7 @@
           <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </hardware>
       </xacro:if>
-
+      <!-- test용도 124214142 -->
       <xacro:unless value="$(arg use_sim)">
         <hardware>
           <xacro:if value="${use_mock_hardware}">
