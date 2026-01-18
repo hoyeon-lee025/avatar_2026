@@ -1,33 +1,38 @@
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
+from sensor_msgs.msg import CompressedImage
+
 import cv2
+import numpy as np
 
 
 class RealSenseRGBSubscriber(Node):
     def __init__(self):
         super().__init__('realsense_rgb_subscriber')
 
-        self.bridge = CvBridge()
-
         self.subscription = self.create_subscription(
-            Image,
-            '/realsense/color/image_raw',   # publisher와 동일
+            CompressedImage,
+            '/realsense/color/image_raw/compressed',
             self.callback,
             10
         )
 
         self.get_logger().info(
-            'Subscribed to /realsense/color/image_raw'
+            'Subscribed to /realsense/color/image_raw/compressed'
         )
 
     def callback(self, msg):
-        # ROS Image → OpenCV image
-        frame = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        # 1️⃣ compressed byte → numpy array
+        np_arr = np.frombuffer(msg.data, np.uint8)
 
-        # 화면 출력
-        cv2.imshow('RealSense RGB (subscriber)', frame)
+        # 2️⃣ JPEG 디코딩
+        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        if frame is None:
+            self.get_logger().warn('Failed to decode image')
+            return
+
+        # 3️⃣ 영상 출력
+        cv2.imshow('RealSense RGB (Compressed Subscriber)', frame)
         cv2.waitKey(1)
 
 
